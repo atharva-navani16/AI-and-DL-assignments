@@ -1,94 +1,50 @@
-# plot photo with detected faces using opencv cascade classifier
-from cv2 import imread
-from cv2 import imshow
-from cv2 import waitKey
-from cv2 import destroyAllWindows
-from cv2 import CascadeClassifier
-from cv2 import rectangle
-# load the photograph
-pixels = imread('faces.jpeg')
+import cv2
+import os
+from google.colab.patches import cv2_imshow
+import urllib.request
 
-# load the pre-trained modelz
-classifier = CascadeClassifier('haarcascade_frontalface_default.xml')
+# Download Haarcascade if not already present
+haarcascade_path = 'haarcascade_frontalface_default.xml'
+if not os.path.exists(haarcascade_path):
+    url = 'https://github.com/opencv/opencv/raw/master/data/haarcascades/haarcascade_frontalface_default.xml'
+    urllib.request.urlretrieve(url, haarcascade_path)
+    print("Haarcascade downloaded successfully!")
 
-# perform face detection
-bboxes = classifier.detectMultiScale(pixels)
+# Function to detect and display faces
+def detect_and_display_faces(image_path, classifier_path):
+    # Load the photograph
+    pixels = cv2.imread(image_path)
+    if pixels is None:
+        print(f"Error: Image not found at {image_path}")
+        return
 
-# print bounding box for each detected face
-for box in bboxes:
-	# extract
-	x, y, width, height = box
-	x2, y2 = x + width, y + height
-	# draw a rectangle over the pixels
-	rectangle(pixels, (x, y), (x2, y2), (0,0,255), 1)
-# show the image
-imshow('face detection', pixels)
-# keep the window open until we press a key
-waitKey(0)
-# close the window
-destroyAllWindows()
+    # Convert to grayscale
+    gray = cv2.cvtColor(pixels, cv2.COLOR_BGR2GRAY)
 
+    # Load the pre-trained model
+    classifier = cv2.CascadeClassifier(classifier_path)
+    if classifier.empty():
+        print(f"Error: Haarcascade file not found at {classifier_path}")
+        return
 
+    # Perform face detection
+    bboxes = classifier.detectMultiScale(gray)
 
+    # Draw rectangles over detected faces
+    for box in bboxes:
+        x, y, width, height = box
+        x2, y2 = x + width, y + height
+        cv2.rectangle(pixels, (x, y), (x2, y2), (0, 0, 255), 2)
 
-# plot photo with detected faces using opencv cascade classifier
-from cv2 import imread
-from cv2 import imshow
-from cv2 import waitKey
-from cv2 import destroyAllWindows
-from cv2 import CascadeClassifier
-from cv2 import rectangle
-# load the photograph
-pixels = imread('berkeley_faces.jpg')
+    # Show the image (Colab uses cv2_imshow)
+    cv2_imshow(pixels)
 
-# load the pre-trained modelz
-classifier = CascadeClassifier('haarcascade_frontalface_default.xml')
-# perform face detection
-bboxes = classifier.detectMultiScale(pixels)
-# print bounding box for each detected face
-for box in bboxes:
-	# extract
-	x, y, width, height = box
-	x2, y2 = x + width, y + height
-	# draw a rectangle over the pixels
-	rectangle(pixels, (x, y), (x2, y2), (0,0,255), 1)
-# show the image
-imshow('face detection', pixels)
-# keep the window open until we press a key
-waitKey(0)
-# close the window
-destroyAllWindows()
+# List of image paths
+image_paths = ['faces.jpeg', 'berkeley_faces.jpg', 'pexels-photo-2379005.jpeg']
 
+# Upload your images to Colab
+print("Please upload your images using the file upload interface.")
 
-
-
-
-# plot photo with detected faces using opencv cascade classifier
-from cv2 import imread
-from cv2 import imshow
-from cv2 import waitKey
-from cv2 import destroyAllWindows
-from cv2 import CascadeClassifier
-from cv2 import rectangle
-# load the photograph
-pixels = imread('pexels-photo-2379005.jpeg')
-
-# load the pre-trained modelz
-classifier = CascadeClassifier('haarcascade_frontalface_default.xml')
-# perform face detection
-bboxes = classifier.detectMultiScale(pixels)
-# print bounding box for each detected face
-for box in bboxes:
-	# extract
-	x, y, width, height = box
-	x2, y2 = x + width, y + height
-	# draw a rectangle over the pixels
-	rectangle(pixels, (x, y), (x2, y2), (0,0,255), 1)
-# show the image
-imshow('face detection', pixels)
-# keep the window open until we press a key
-waitKey(0)
-# close the window
-destroyAllWindows()
-# plot photo with detected faces using opencv cascade classifier
-
+# Run detection on uploaded images
+for img_path in image_paths:
+    detect_and_display_faces(img_path, haarcascade_path)
