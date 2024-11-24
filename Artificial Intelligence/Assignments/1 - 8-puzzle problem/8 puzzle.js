@@ -1,106 +1,109 @@
-let puzzle = [0, 1, 2, 3, 4, 5, 6, 7, 8]; // Initial puzzle state
-let emptyTile = 0; // Represents the blank tile
+import random
+from collections import deque
+import time
+import os
 
-const directions = {
-  up: -3,
-  down: 3,
-  left: -1,
-  right: 1
-};
-
-// Shuffle the puzzle
-function shuffle() {
-  for (let i = 0; i < 100; i++) {
-    let randomDirection = Object.keys(directions)[Math.floor(Math.random() * 4)];
-    moveTile(randomDirection);
-  }
-  updateUI();
+# Initial puzzle state
+puzzle = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+directions = {
+    "up": -3,
+    "down": 3,
+    "left": -1,
+    "right": 1
 }
+empty_tile = 0  # Position of the empty tile
 
-// Update UI to reflect puzzle state
-function updateUI() {
-  puzzle.forEach((value, index) => {
-    let tile = document.getElementById(`tile-${index}`);
-    tile.innerText = value !== 0 ? value : '';
-    tile.style.backgroundColor = value === 0 ? '#ecf0f1' : '#3498db';
-  });
-}
+# Shuffle the puzzle
+def shuffle():
+    global puzzle, empty_tile
+    for _ in range(100):
+        random_direction = random.choice(list(directions.keys()))
+        move_tile(random_direction)
+    update_ui()
 
-// Move tile in the given direction
-function moveTile(direction) {
-  let targetIndex = puzzle.indexOf(0) + directions[direction];
+# Update UI (console representation) to reflect puzzle state
+def update_ui():
+    os.system('clear')  # Clear the console for better visualization (use 'cls' for Windows)
+    for i in range(3):
+        print(puzzle[i * 3:(i + 1) * 3])
+    print()
 
-  if (isValidMove(targetIndex, direction)) {
-    [puzzle[emptyTile], puzzle[targetIndex]] = [puzzle[targetIndex], puzzle[emptyTile]];
-    emptyTile = targetIndex;
-    updateUI();
-  }
-}
+# Move tile in the given direction
+def move_tile(direction):
+    global puzzle, empty_tile
+    target_index = empty_tile + directions[direction]
 
-// Validate move based on boundaries and puzzle rules
-function isValidMove(targetIndex, direction) {
-  if (targetIndex < 0 || targetIndex > 8) return false;
-  if ((emptyTile % 3 === 0 && direction === "left") || (emptyTile % 3 === 2 && direction === "right")) return false;
-  return true;
-}
+    if is_valid_move(empty_tile, target_index, direction):
+        puzzle[empty_tile], puzzle[target_index] = puzzle[target_index], puzzle[empty_tile]
+        empty_tile = target_index
 
-// BFS Algorithm
-function bfsSolve() {
-  let visited = new Set();
-  let queue = [{ state: puzzle.slice(), moves: [] }];
+# Validate move based on boundaries and puzzle rules
+def is_valid_move(empty_index, target_index, direction):
+    if target_index < 0 or target_index > 8:
+        return False
+    if (empty_index % 3 == 0 and direction == "left") or (empty_index % 3 == 2 and direction == "right"):
+        return False
+    return True
 
-  while (queue.length > 0) {
-    let { state, moves } = queue.shift();
+# Solve the puzzle using BFS
+def bfs_solve():
+    visited = set()
+    queue = deque([{"state": puzzle[:], "moves": []}])
 
-    if (isGoal(state)) {
-      animateMoves(moves);
-      return;
-    }
+    while queue:
+        current = queue.popleft()
+        state = current["state"]
+        moves = current["moves"]
 
-    visited.add(state.toString());
+        if is_goal(state):
+            animate_moves(moves)
+            return
 
-    for (let dir in directions) {
-      let newState = moveState(state.slice(), dir);
-      if (newState && !visited.has(newState.toString())) {
-        queue.push({ state: newState, moves: [...moves, dir] });
-      }
-    }
-  }
-}
+        visited.add(tuple(state))
 
-// Move state for BFS
-function moveState(state, direction) {
-  let emptyIndex = state.indexOf(0);
-  let targetIndex = emptyIndex + directions[direction];
+        for direction in directions:
+            new_state = move_state(state[:], direction)
+            if new_state and tuple(new_state) not in visited:
+                queue.append({"state": new_state, "moves": moves + [direction]})
 
-  if (isValidMoveBFS(emptyIndex, targetIndex, direction)) {
-    [state[emptyIndex], state[targetIndex]] = [state[targetIndex], state[emptyIndex]];
-    return state;
-  }
-  return null;
-}
+# Move state for BFS
+def move_state(state, direction):
+    empty_index = state.index(0)
+    target_index = empty_index + directions[direction]
 
-// Validate move for BFS
-function isValidMoveBFS(emptyIndex, targetIndex, direction) {
-  if (targetIndex < 0 || targetIndex > 8) return false;
-  if ((emptyIndex % 3 === 0 && direction === "left") || (emptyIndex % 3 === 2 && direction === "right")) return false;
-  return true;
-}
+    if is_valid_move_bfs(empty_index, target_index, direction):
+        state[empty_index], state[target_index] = state[target_index], state[empty_index]
+        return state
+    return None
 
-// Check if current state matches the goal
-function isGoal(state) {
-  return state.toString() === "0,1,2,3,4,5,6,7,8";
-}
+# Validate move for BFS
+def is_valid_move_bfs(empty_index, target_index, direction):
+    if target_index < 0 or target_index > 8:
+        return False
+    if (empty_index % 3 == 0 and direction == "left") or (empty_index % 3 == 2 and direction == "right"):
+        return False
+    return True
 
-// Animate the solution moves
-function animateMoves(moves) {
-  let i = 0;
-  let interval = setInterval(() => {
-    moveTile(moves[i]);
-    i++;
-    if (i === moves.length) clearInterval(interval);
-  }, 500);
-}
+# Check if current state matches the goal
+def is_goal(state):
+    return state == [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
-// Initialize puzzle on load
-updateUI();
+# Animate the solution moves
+def animate_moves(moves):
+    global puzzle, empty_tile
+    for move in moves:
+        move_tile(move)
+        update_ui()
+        time.sleep(0.5)
+
+# Main
+if __name__ == "__main__":
+    print("Initial Puzzle:")
+    update_ui()
+
+    print("Shuffling puzzle...")
+    shuffle()
+    update_ui()
+
+    print("Solving puzzle using BFS...")
+    bfs_solve()
